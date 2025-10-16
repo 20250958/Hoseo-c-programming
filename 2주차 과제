@@ -1,0 +1,75 @@
+#include <stdio.h>
+
+int main() {
+    int product_count;
+    int incoming_stock[100];
+    int sales_quantity[100];
+    int current_stock[100];
+
+    int total_sales = 0;
+    int total_incoming = 0;
+    float sales_rate = 0.0;
+
+    int max_sales_quantity;
+    int max_sales_id;
+    int min_sales_quantity;
+    int min_sales_id;
+
+    printf("상품 종류의 개수를 입력하세요: ");
+    scanf("%d", &product_count);
+
+    printf("상품별 입고 수량을 순서대로 입력하세요: ");
+    for (int i = 0; i < product_count; i++) {
+        scanf("%d", &incoming_stock[i]);
+    }
+
+    printf("상품별 판매 수량을 순서대로 입력하세요: ");
+    for (int i = 0; i < product_count; i++) {
+        scanf("%d", &sales_quantity[i]);
+    }
+
+    max_sales_quantity = sales_quantity[0];
+    max_sales_id = 1;
+    min_sales_quantity = sales_quantity[0];
+    min_sales_id = 1;
+
+    for (int i = 0; i < product_count; i++) {
+        current_stock[i] = incoming_stock[i] - sales_quantity[i];
+        total_sales += sales_quantity[i];
+        total_incoming += incoming_stock[i];
+
+        if (i > 0 && sales_quantity[i] > max_sales_quantity) {
+            max_sales_quantity = sales_quantity[i];
+            max_sales_id = i + 1;
+        }
+
+        if (i > 0 && sales_quantity[i] < min_sales_quantity) {
+            min_sales_quantity = sales_quantity[i];
+            min_sales_id = i + 1;
+        }
+    }
+
+    if (total_incoming > 0) {
+        sales_rate = ((float)total_sales / total_incoming) * 100.0;
+    }
+
+    printf("\n--- 재고 분석 결과 ---\n");
+
+    printf("재고수량 : ");
+    for (int i = 0; i < product_count; i++) {
+        printf("%d ", current_stock[i]);
+    }
+    printf("\n");
+
+    printf("총 판매량 : %d (판매율 %.2f%%)\n", total_sales, sales_rate);
+    printf("가장 많이 판매된 상품 : ID %d, 판매량 %d\n", max_sales_id, max_sales_quantity);
+    printf("가장 적게 판매된 상품 : ID %d, 판매량 %d\n", min_sales_id, min_sales_quantity);
+
+    for (int i = 0; i < product_count; i++) {
+        if (current_stock[i] <= 2) {
+            printf("상품 ID %d : 재고부족(%d)\n", i + 1, current_stock[i]);
+        }
+    }
+
+    return 0;
+}
