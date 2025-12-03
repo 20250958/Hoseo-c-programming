@@ -1,0 +1,154 @@
+#include <stdio.h>
+#include <string.h>
+
+#define MAX_PRODUCTS 5
+
+void findAndStock(int product_ids[], char product_names[][100], int product_prices[], int incoming_stock[], int* count);
+void findAndSell(int product_ids[], int incoming_stock[], int sales_quantity[], int count);
+void printIndividualStatus(int product_ids[], char product_names[][100], int product_prices[], int incoming_stock[], int sales_quantity[], int count);
+void printOverallStatus(int product_ids[], char product_names[][100], int product_prices[], int incoming_stock[], int sales_quantity[], int count);
+void saveData(int product_ids[], char product_names[][100], int product_prices[], int incoming_stock[], int sales_quantity[], int count);
+void loadData(int product_ids[], char product_names[][100], int product_prices[], int incoming_stock[], int sales_quantity[], int* count);
+
+int main() {
+    int product_ids[MAX_PRODUCTS] = {0}; 
+    char product_names[MAX_PRODUCTS][100]; 
+    int product_prices[MAX_PRODUCTS] = {0};
+    int incoming_stock[MAX_PRODUCTS] = {0};
+    int sales_quantity[MAX_PRODUCTS] = {0};
+    int current_product_count = 0; 
+    int menu_choice;
+
+    while (1) {
+        printf("\n[쇼핑몰 관리 프로그램]\n");
+        printf("1.입고 2.판매 3.개별현황 4.전체현황 5.저장 6.가져오기 7.종료\n메뉴 선택: ");
+        scanf(" %d", &menu_choice); 
+
+        if (menu_choice == 1) findAndStock(product_ids, product_names, product_prices, incoming_stock, &current_product_count);
+        else if (menu_choice == 2) findAndSell(product_ids, incoming_stock, sales_quantity, current_product_count);
+        else if (menu_choice == 3) printIndividualStatus(product_ids, product_names, product_prices, incoming_stock, sales_quantity, current_product_count);
+        else if (menu_choice == 4) printOverallStatus(product_ids, product_names, product_prices, incoming_stock, sales_quantity, current_product_count);
+        else if (menu_choice == 5) saveData(product_ids, product_names, product_prices, incoming_stock, sales_quantity, current_product_count);
+        else if (menu_choice == 6) loadData(product_ids, product_names, product_prices, incoming_stock, sales_quantity, &current_product_count);
+        else if (menu_choice == 7) break;
+        else printf("잘못된 메뉴입니다.\n");
+    } 
+    return 0;
+}
+
+void findAndStock(int product_ids[], char product_names[][100], int product_prices[], int incoming_stock[], int* count) {
+    int target_id, found_index = -1; 
+    printf("상품ID : ");
+    scanf("%d", &target_id);
+
+    for (int i = 0; i < *count; i++) {
+        if (product_ids[i] == target_id) {
+            found_index = i;
+            break;
+        }
+    }
+
+    if (found_index != -1) {
+        printf("상품명 : "); scanf("%s", product_names[found_index]); 
+        int amount;
+        printf("추가 입고량 : "); scanf("%d", &amount);
+        incoming_stock[found_index] += amount;
+        printf("판매가격 : "); scanf("%d", &product_prices[found_index]);
+    } else {
+        if (*count < MAX_PRODUCTS) {
+            product_ids[*count] = target_id;
+            printf("상품명 : "); scanf("%s", product_names[*count]); 
+            printf("입고량 : "); scanf("%d", &incoming_stock[*count]);
+            printf("판매가격 : "); scanf("%d", &product_prices[*count]);
+            (*count)++; 
+        } else {
+            printf("상품 등록 초과 (최대 %d개)\n", MAX_PRODUCTS);
+        }
+    }
+}
+
+void findAndSell(int product_ids[], int incoming_stock[], int sales_quantity[], int count) {
+    int target_id, found_index = -1;
+    printf("상품ID : ");
+    scanf("%d", &target_id);
+
+    for (int i = 0; i < count; i++) {
+        if (product_ids[i] == target_id) { found_index = i; break; }
+    }
+
+    if (found_index != -1) {
+        int amount;
+        printf("판매량 : "); scanf("%d", &amount);
+        if (amount > (incoming_stock[found_index] - sales_quantity[found_index])) {
+            printf("재고 부족\n");
+        } else {
+            sales_quantity[found_index] += amount;
+            printf("판매 완료\n");
+        }
+    } else {
+        printf("ID 오류\n");
+    }
+}
+
+void printIndividualStatus(int product_ids[], char product_names[][100], int product_prices[], int incoming_stock[], int sales_quantity[], int count) {
+    int target_id, found_index = -1;
+    printf("조회할 상품ID : ");
+    scanf("%d", &target_id);
+
+    for (int i = 0; i < count; i++) {
+        if (product_ids[i] == target_id) { found_index = i; break; }
+    }
+
+    if (found_index != -1) {
+        printf("ID:%d / 명:%s / 가격:%d / 입고:%d / 판매:%d / 재고:%d / 총판매액:%d\n", 
+            product_ids[found_index], product_names[found_index], product_prices[found_index], 
+            incoming_stock[found_index], sales_quantity[found_index], 
+            incoming_stock[found_index] - sales_quantity[found_index], 
+            product_prices[found_index] * sales_quantity[found_index]);
+    } else {
+        printf("ID 오류\n");
+    }
+}
+
+void printOverallStatus(int product_ids[], char product_names[][100], int product_prices[], int incoming_stock[], int sales_quantity[], int count) {
+    if (count == 0) { printf("등록된 상품 없음\n"); return; }
+
+    int total_sales = 0, total_incoming = 0;
+    int max_idx = 0, min_idx = 0;
+
+    for (int i = 0; i < count; i++) {
+        total_sales += sales_quantity[i];
+        total_incoming += incoming_stock[i];
+        if (sales_quantity[i] > sales_quantity[max_idx]) max_idx = i;
+        if (sales_quantity[i] < sales_quantity[min_idx]) min_idx = i;
+    }
+
+    printf("\n--- 전체 현황 ---\n");
+    printf("재고수량 : ");
+    for (int i = 0; i < count; i++) printf("%d ", incoming_stock[i] - sales_quantity[i]);
+    printf("\n총 판매량 : %d (판매율 %.2f%%)\n", total_sales, total_incoming > 0 ? ((float)total_sales/total_incoming)*100 : 0);
+    printf("최다 판매 : ID %d (%s) %d개\n", product_ids[max_idx], product_names[max_idx], sales_quantity[max_idx]);
+    printf("최소 판매 : ID %d (%s) %d개\n", product_ids[min_idx], product_names[min_idx], sales_quantity[min_idx]);
+}
+
+void saveData(int product_ids[], char product_names[][100], int product_prices[], int incoming_stock[], int sales_quantity[], int count) {
+    FILE *fp = fopen("products.txt", "w");
+    if (fp == NULL) return;
+    fprintf(fp, "%d\n", count);
+    for (int i = 0; i < count; i++) {
+        fprintf(fp, "%d %s %d %d %d\n", product_ids[i], product_names[i], product_prices[i], incoming_stock[i], sales_quantity[i]);
+    }
+    fclose(fp);
+    printf("저장 완료\n");
+}
+
+void loadData(int product_ids[], char product_names[][100], int product_prices[], int incoming_stock[], int sales_quantity[], int* count) {
+    FILE *fp = fopen("products.txt", "r");
+    if (fp == NULL) { printf("파일 없음\n"); return; }
+    fscanf(fp, "%d", count);
+    for (int i = 0; i < *count; i++) {
+        fscanf(fp, "%d %s %d %d %d", &product_ids[i], product_names[i], &product_prices[i], &incoming_stock[i], &sales_quantity[i]);
+    }
+    fclose(fp);
+    printf("불러오기 완료 (%d개)\n", *count);
+}
